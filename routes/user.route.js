@@ -3,7 +3,8 @@ const router = Router();
 import { upload } from "../middlewares/multer.middleware.js";
 
 // import controllers
-import registerUser from "../controllers/user.controller.js"
+import {loginUser, registerUser,logoutUser} from "../controllers/user.controller.js"
+import { verifyJWT } from "../middlewares/auth.middlewares.js";
 
 
 // use routes
@@ -21,5 +22,14 @@ router.route("/register").post(
 )
 
 
-// router.route("/login").post(login)
+router.route("/login").post(
+    loginUser
+)
+router.route("/logout").post(
+    loginUser
+)
+router.route("/logout").post(
+    verifyJWT,
+    logoutUser
+)
 export default router;
