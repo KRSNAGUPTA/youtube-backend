@@ -237,15 +237,14 @@ const getUser = asyncHandler(async (req, res) => {
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullName, email } = req.body;
-  
+
   try {
-    
     const user = await User.findByIdAndUpdate(
       req.user._id,
       {
         $set: { fullName, email },
       },
-      { new: true, select: '-password' }
+      { new: true, select: "-password" }
     );
     if (!user) {
       return res.status(404).json(new ApiResponse(404, null, "User not found"));
@@ -260,7 +259,6 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 });
 
 const updateAvatar = asyncHandler(async (req, res) => {
-  
   try {
     const localAvatarPath = req.file?.path;
     if (!localAvatarPath) {
@@ -271,7 +269,6 @@ const updateAvatar = asyncHandler(async (req, res) => {
     if (!cloudinaryAvatarPath.url) {
       throw new ApiError(402, "Error while uploading Avatar on Cloudinary");
     }
-    
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
@@ -285,62 +282,76 @@ const updateAvatar = asyncHandler(async (req, res) => {
 
     return res.status(201).json(new ApiResponse(201, {}, "Avatar updated"));
   } catch (error) {
-    throw new ApiError(400, error.message || "Error while updating Avatar image");
+    throw new ApiError(
+      400,
+      error.message || "Error while updating Avatar image"
+    );
   }
 });
 
-
-  const updateCoverImage = asyncHandler(async (req, res) => {
-    try {
-      const coverImageLocalPath = req.file?.path;
-      if (!coverImageLocalPath) {
-        throw new ApiError(404, "CoverImage not provided");
-      }
-  
-      const cloudinaryCoverImgPath = await uploadOnCloudinary(coverImageLocalPath);
-      if (!cloudinaryCoverImgPath.url) {
-        throw new ApiError(402, "Error while uploading Cover image on Cloudinary");
-      }
-  
-      const user = await User.findByIdAndUpdate(
-        req._id,
-        { $set: { coverImage: cloudinaryCoverImgPath.url } },
-        { new: true, useFindAndModify: false }
-      ).select("-password");
-  
-      if (!user) {
-        throw new ApiError(401, "Error while updating cover image in DB");
-      }
-  
-      return res.status(201).json(new ApiResponse(201, {}, "Cover Image updated"));
-    } catch (error) {
-      throw new ApiError(400, error.message || "Error while updating cover image");
+const updateCoverImage = asyncHandler(async (req, res) => {
+  try {
+    const coverImageLocalPath = req.file?.path;
+    if (!coverImageLocalPath) {
+      throw new ApiError(404, "CoverImage not provided");
     }
-  });
-  
-  const removeCoverImage = asyncHandler(async(req,res)=>{
-    try {
-      const removed = await User.findByIdAndUpdate(
-        req?._id,
-        {
-          $set:{
-            coverImage : ""
-          }
+
+    const cloudinaryCoverImgPath =
+      await uploadOnCloudinary(coverImageLocalPath);
+    if (!cloudinaryCoverImgPath.url) {
+      throw new ApiError(
+        402,
+        "Error while uploading Cover image on Cloudinary"
+      );
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req._id,
+      { $set: { coverImage: cloudinaryCoverImgPath.url } },
+      { new: true, useFindAndModify: false }
+    ).select("-password");
+
+    if (!user) {
+      throw new ApiError(401, "Error while updating cover image in DB");
+    }
+
+    return res
+      .status(201)
+      .json(new ApiResponse(201, {}, "Cover Image updated"));
+  } catch (error) {
+    throw new ApiError(
+      400,
+      error.message || "Error while updating cover image"
+    );
+  }
+});
+
+const removeCoverImage = asyncHandler(async (req, res) => {
+  try { 
+    const removed = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set: {
+          coverImage: "",
         },
-        {
-          new : true
-        }
-      ).select("-password");
-      if(!removed){
-        throw new ApiError(401, "Error while removing cover image");
+      },
+      {
+        new: true,
       }
-      return res
+    ).select("-password");
+    if (!removed) {
+      throw new ApiError(401, "Error while removing cover image");
+    }
+    return res
       .status(200)
       .json(new ApiResponse(200, {}, "Cover Image removed"));
-    } catch (error) {
-      throw new ApiError(400, error.message || "Error while removing cover image")
-    }
-  })
+  } catch (error) {
+    throw new ApiError(
+      400,
+      error.message || "Error while removing cover image"
+    );
+  }
+});
 export {
   registerUser,
   loginUser,
@@ -351,5 +362,5 @@ export {
   updateAccountDetails,
   updateAvatar,
   updateCoverImage,
-  removeCoverImage
-}
+  removeCoverImage,
+};
