@@ -201,12 +201,24 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      throw new ApiError(401, "Refresh token has expired");
+      throw new ApiError(401, "Refresh token has expired"); 
     } else if (error instanceof jwt.JsonWebTokenError) {
       throw new ApiError(401, "Invalid refresh token");
     }
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
 });
+const changeCurrentPassword = asyncHandler(async(req,res)=>{
+  const {oldPassword,newPassword} = req.body
+  const user = await User.findById(req.user?.id)
+
+  if(!user.isCorrectPassword(oldPassword)){
+    throw new ApiError(401, "Old password is incorrect")
+  }
+  user.password = newPassword
+  await user.save({validateBeforeSave:false})
+  return res.json(new ApiResponse(200, {}, "Password changed successfully"))
+
+})
 
 export { registerUser, loginUser, logoutUser,refreshAccessToken };
