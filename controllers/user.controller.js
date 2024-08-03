@@ -15,7 +15,6 @@ const generateAccessAndRefreshToken = async (userId) => {
     user.save({ validateBeforeSave: false });
     return { accessToken, refreshToken };
   } catch (error) {
-    console.log(process.env.REFRESH_TOKEN_SECRET);
     throw new ApiError(
       500,
       "Error while generating Access and refresh token \n",
@@ -238,16 +237,16 @@ const getUser = asyncHandler(async (req, res) => {
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullName, email } = req.body;
-
+  
   try {
+    
     const user = await User.findByIdAndUpdate(
       req.user._id,
       {
         $set: { fullName, email },
       },
-      { new: true }
-    ).select("-password");
-
+      { new: true, select: '-password' }
+    );
     if (!user) {
       return res.status(404).json(new ApiResponse(404, null, "User not found"));
     }
@@ -259,7 +258,9 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     return res.status(500).json(new ApiResponse(500, null, "Server error"));
   }
 });
+
 const updateAvatar = asyncHandler(async (req, res) => {
+  
   try {
     const localAvatarPath = req.file?.path;
     if (!localAvatarPath) {
@@ -270,9 +271,10 @@ const updateAvatar = asyncHandler(async (req, res) => {
     if (!cloudinaryAvatarPath.url) {
       throw new ApiError(402, "Error while uploading Avatar on Cloudinary");
     }
+    
 
     const user = await User.findByIdAndUpdate(
-      req._id,
+      req.user._id,
       { $set: { avatar: cloudinaryAvatarPath.url } },
       { new: true, useFindAndModify: false }
     ).select("-password");
@@ -316,6 +318,29 @@ const updateAvatar = asyncHandler(async (req, res) => {
     }
   });
   
+  const removeCoverImage = asyncHandler(async(req,res)=>{
+    try {
+      const removed = await User.findByIdAndUpdate(
+        req?._id,
+        {
+          $set:{
+            coverImage : ""
+          }
+        },
+        {
+          new : true
+        }
+      ).select("-password");
+      if(!removed){
+        throw new ApiError(401, "Error while removing cover image");
+      }
+      return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Cover Image removed"));
+    } catch (error) {
+      throw new ApiError(400, error.message || "Error while removing cover image")
+    }
+  })
 export {
   registerUser,
   loginUser,
@@ -325,5 +350,6 @@ export {
   changeCurrentPassword,
   updateAccountDetails,
   updateAvatar,
-  updateCoverImage
+  updateCoverImage,
+  removeCoverImage
 }
