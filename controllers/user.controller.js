@@ -220,7 +220,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  const user = await User.findById(req.user?.id);
+  const user = await User.findById(req.user?._id);
 
   if (!user.isCorrectPassword(oldPassword)) {
     throw new ApiError(401, "Old password is incorrect");
@@ -231,9 +231,91 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 const getUser = asyncHandler(async (req, res) => {
-  return res.json(new ApiResponse(200, req.user, "User retrieved successfully"));
+  return res.json(
+    new ApiResponse(200, req.user, "User retrieved successfully")
+  );
 });
 
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName, email } = req.body;
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set: { fullName, email },
+      },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json(new ApiResponse(404, null, "User not found"));
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "User details updated successfully"));
+  } catch (error) {
+    return res.status(500).json(new ApiResponse(500, null, "Server error"));
+  }
+});
+const updateAvatar = asyncHandler(async (req, res) => {
+  try {
+    const localAvatarPath = req.file?.path;
+    if (!localAvatarPath) {
+      throw new ApiError(404, "Avatar not provided");
+    }
+
+    const cloudinaryAvatarPath = await uploadOnCloudinary(localAvatarPath);
+    if (!cloudinaryAvatarPath.url) {
+      throw new ApiError(402, "Error while uploading Avatar on Cloudinary");
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req._id,
+      { $set: { avatar: cloudinaryAvatarPath.url } },
+      { new: true, useFindAndModify: false }
+    ).select("-password");
+
+    if (!user) {
+      throw new ApiError(401, "Error while updating Avatar in DB");
+    }
+
+    return res.status(201).json(new ApiResponse(201, {}, "Avatar updated"));
+  } catch (error) {
+    throw new ApiError(400, error.message || "Error while updating Avatar image");
+  }
+});
+
+
+  const updateCoverImage = asyncHandler(async (req, res) => {
+    try {
+      const coverImageLocalPath = req.file?.path;
+      if (!coverImageLocalPath) {
+        throw new ApiError(404, "CoverImage not provided");
+      }
+  
+      const cloudinaryCoverImgPath = await uploadOnCloudinary(coverImageLocalPath);
+      if (!cloudinaryCoverImgPath.url) {
+        throw new ApiError(402, "Error while uploading Cover image on Cloudinary");
+      }
+  
+      const user = await User.findByIdAndUpdate(
+        req._id,
+        { $set: { coverImage: cloudinaryCoverImgPath.url } },
+        { new: true, useFindAndModify: false }
+      ).select("-password");
+  
+      if (!user) {
+        throw new ApiError(401, "Error while updating cover image in DB");
+      }
+  
+      return res.status(201).json(new ApiResponse(201, {}, "Cover Image updated"));
+    } catch (error) {
+      throw new ApiError(400, error.message || "Error while updating cover image");
+    }
+  });
+  
 export {
   registerUser,
   loginUser,
@@ -241,4 +323,7 @@ export {
   refreshAccessToken,
   getUser,
   changeCurrentPassword,
-};
+  updateAccountDetails,
+  updateAvatar,
+  updateCoverImage
+}
