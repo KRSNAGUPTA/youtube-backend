@@ -38,9 +38,10 @@ router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/refresh-token").post(verifyJWT, refreshAccessToken);
 router.route("/update-details").post(verifyJWT, updateAccountDetails);
 router.post("/update-avatar", verifyJWT, upload.single('avatar'), updateAvatar);
-router.route("/update-coverimg").post(
+router.post("/update-coverimg",
     verifyJWT,
-    upload.fields([{ name: "coverImg", maxCount: 1 }], updateCoverImage)
+    upload.single('coverImage'),
+    updateCoverImage
   );
 router.route("/remove-coverimg").post( verifyJWT, removeCoverImage)
 router.route("/get-user").get(getUser);
